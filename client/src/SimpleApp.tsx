@@ -297,27 +297,91 @@ function SimpleCar({ raceState }: { raceState: any }) {
 
 // Main menu
 function SimpleMenu({ onStartGame }: { onStartGame: () => void }) {
+  const gameTemplates = [
+    {
+      id: "openworld",
+      name: "Open World Explorer",
+      description: "Large open world with camera controls and free exploration",
+      color: "bg-green-500 hover:bg-green-600",
+      action: onStartGame
+    },
+    {
+      id: "platformer",
+      name: "Platformer Adventure",
+      description: "Jump and explore platforms with physics-based movement",
+      color: "bg-purple-500 hover:bg-purple-600",
+      action: () => alert("Game template created! Check client/src/games/platformer.tsx")
+    },
+    {
+      id: "racing",
+      name: "Circuit Racing",
+      description: "High-speed racing with drift physics and lap timing",
+      color: "bg-red-500 hover:bg-red-600",
+      action: () => alert("Game template created! Check client/src/games/racing.tsx")
+    },
+    {
+      id: "shooter",
+      name: "Arena Shooter",
+      description: "Top-down combat with bullets and enemy AI",
+      color: "bg-orange-500 hover:bg-orange-600",
+      action: () => alert("Game template created! Check client/src/games/shooter.tsx")
+    },
+    {
+      id: "puzzle",
+      name: "Puzzle Chamber",
+      description: "Solve puzzles with switches, boxes, and interactive objects",
+      color: "bg-cyan-500 hover:bg-cyan-600",
+      action: () => alert("Game template created! Check client/src/games/puzzle.tsx")
+    },
+    {
+      id: "sandbox",
+      name: "Sandbox Mode",
+      description: "Creative mode for building and experimenting",
+      color: "bg-yellow-500 hover:bg-yellow-600",
+      action: () => alert("Game template created! Check client/src/games/sandbox.tsx")
+    }
+  ];
+
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-blue-900 to-blue-600">
-      <div className="bg-white/90 backdrop-blur-sm shadow-2xl p-8 rounded-lg max-w-md w-full mx-4 text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">3D Game Framework</h1>
-        <p className="text-gray-600 mb-6">A simple Roblox-like game framework</p>
+    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-blue-900 to-blue-600 overflow-y-auto">
+      <div className="bg-white/95 backdrop-blur-sm shadow-2xl p-6 rounded-lg max-w-5xl w-full mx-4">
+        <div className="text-center mb-8">
+          <h1 className="text-5xl font-bold text-gray-800 mb-3">3D Game Framework</h1>
+          <p className="text-gray-600 text-lg">Multiple game templates with modular architecture</p>
+        </div>
         
-        <div className="space-y-4">
-          <div className="bg-gray-100 p-4 rounded-lg">
-            <h3 className="text-lg font-bold text-gray-800 mb-2">Driving Game</h3>
-            <p className="text-sm text-gray-600 mb-3">Drive a car around a track with realistic physics</p>
-            <button 
-              onClick={onStartGame}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-            >
-              Play Game
-            </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          {gameTemplates.map((game) => (
+            <div key={game.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-800 mb-2">{game.name}</h3>
+              <p className="text-sm text-gray-600 mb-3 min-h-[40px]">{game.description}</p>
+              <button 
+                onClick={game.action}
+                className={`w-full text-white px-4 py-2 rounded font-medium transition-colors ${game.color}`}
+              >
+                {game.id === "openworld" ? "Play Demo" : "View Template"}
+              </button>
+            </div>
+          ))}
+        </div>
+        
+        <div className="bg-gray-100 p-4 rounded-lg">
+          <h4 className="font-bold text-gray-800 mb-2">Game Templates Include:</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 text-sm text-gray-600 gap-2">
+            <div>• Open World - Camera-relative movement</div>
+            <div>• Platformer - Jump physics & collision</div>
+            <div>• Racing - Car physics & drift mechanics</div>
+            <div>• Shooter - Bullet system & AI enemies</div>
+            <div>• Puzzle - Interactive objects & switches</div>
+            <div>• Sandbox - Creative building tools</div>
+          </div>
+          <div className="mt-3 text-xs text-gray-500">
+            All templates use React Three Fiber, modular controls, and the game registry system
           </div>
         </div>
         
-        <div className="mt-6 text-sm text-gray-600">
-          WASD to move • Space to jump • ESC to return to menu
+        <div className="mt-4 text-center text-sm text-gray-600">
+          WASD to move • I/K/J/L for camera • Space to interact • ESC to return
         </div>
       </div>
     </div>

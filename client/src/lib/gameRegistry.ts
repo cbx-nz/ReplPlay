@@ -1,5 +1,9 @@
 import { drivingGameConfig } from "../games/driving";
 import { sandboxGameConfig } from "../games/sandbox";
+import { platformerGameConfig } from "../games/platformer";
+import { shooterGameConfig } from "../games/shooter";
+import { puzzleGameConfig } from "../games/puzzle";
+import { racingGameConfig } from "../games/racing";
 
 export interface GameInfo {
   id: string;
@@ -11,5 +15,9 @@ export interface GameInfo {
 
 export const gameRegistry: { [key: string]: Omit<GameInfo, 'id'> } = {
   driving: drivingGameConfig,
-  sandbox: sandboxGameConfig
+  sandbox: sandboxGameConfig,
+  platformer: platformerGameConfig,
+  shooter: shooterGameConfig,
+  puzzle: puzzleGameConfig,
+  racing: racingGameConfig
 };

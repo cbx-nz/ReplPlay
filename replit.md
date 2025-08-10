@@ -1,6 +1,6 @@
 # Overview
 
-This project is a 3D multiplayer game framework built with React Three Fiber on the frontend and Express.js with WebSocket support on the backend. The framework supports multiple game types (driving and sandbox games) with real-time multiplayer functionality. It features a modular architecture where new games can be easily added through a game registry system.
+This project is a 3D multiplayer game framework built with React Three Fiber on the frontend and Express.js with WebSocket support on the backend. The framework includes 6 complete game templates demonstrating different gameplay mechanics: Open World Explorer, Platformer Adventure, Circuit Racing, Arena Shooter, Puzzle Chamber, and Sandbox Mode. It features a modular architecture where new games can be easily added through a game registry system. The current demo showcases an open world environment with camera-relative movement and free exploration.
 
 # User Preferences
 
@@ -18,7 +18,8 @@ The frontend uses React with Three.js through React Three Fiber for 3D rendering
   - `useMultiplayer`: Handles WebSocket connections and player synchronization
   - `useGame`: Controls game phases (ready, playing, ended)
   - `useAudio`: Manages sound effects and background music
-- **Game Registry**: A modular system where games are registered with their components and initialization functions
+- **Game Registry**: A modular system where games are registered with their components and initialization functions (6 game templates available)
+- **Game Templates**: Complete implementations of different game genres with unique control schemes and physics
 - **3D Rendering**: Canvas-based rendering with support for physics, lighting, and post-processing effects
 - **UI Framework**: Radix UI components with Tailwind CSS for styling
 
@@ -39,9 +40,11 @@ The backend follows a RESTful API design with WebSocket support for real-time fe
 
 ## Game System Design
 
-- **Modular Games**: Each game (driving, sandbox) is a self-contained module with its own component and initialization logic
-- **Physics Engine**: Custom physics implementation for collision detection and movement
-- **Input System**: Keyboard controls mapped through a centralized control system
+- **Modular Games**: Each game template is a self-contained module with its own component and initialization logic
+- **Game Templates**: 6 complete game templates (Open World, Platformer, Racing, Shooter, Puzzle, Sandbox)
+- **Game Registry**: Centralized registration system for all game templates in `gameRegistry.ts`
+- **Physics Engine**: Custom physics implementation for collision detection, movement, and game-specific mechanics
+- **Input System**: Keyboard controls mapped through a centralized control system with game-specific control schemes
 - **Multiplayer Synchronization**: Real-time player position and state updates across connected clients
 
 ## Development Workflow
@@ -81,3 +84,19 @@ The backend follows a RESTful API design with WebSocket support for real-time fe
 - **WebGL Shaders**: GLSL support for custom visual effects
 - **3D Asset Loading**: Support for GLTF/GLB model formats
 - **Audio Assets**: MP3, OGG, WAV file support for game audio
+
+## Game Templates Available
+- **Open World Explorer**: Large open world with camera-relative movement and free exploration
+- **Platformer Adventure**: Side-scrolling with jump physics and platform collision detection
+- **Circuit Racing**: High-speed racing with drift physics and professional track
+- **Arena Shooter**: Top-down combat with bullet system and tank controls
+- **Puzzle Chamber**: Interactive object manipulation with switches and doors
+- **Sandbox Mode**: Creative building and experimentation mode
+
+## Recent Changes (August 2025)
+- Added 5 new game templates with complete gameplay mechanics
+- Expanded open world demo to 200x200 units with camera controls
+- Implemented camera-relative movement system (move where you're looking)
+- Created comprehensive game template documentation
+- Updated game registry system to handle multiple game types
+- Enhanced main menu to showcase all available game templates
