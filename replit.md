@@ -12,12 +12,28 @@ Preferred communication style: Simple, everyday language.
 
 The frontend uses React with Three.js through React Three Fiber for 3D rendering. The architecture follows a component-based approach with:
 
-- **Game Engine System**: A central game engine (`GameEngine` component) that manages game lifecycle and dynamically loads game modules from a registry
-- **State Management**: Zustand stores handle different aspects of the application:
-  - `useGameEngine`: Manages current game, game state, and game data
-  - `useMultiplayer`: Handles WebSocket connections and player synchronization
-  - `useGame`: Controls game phases (ready, playing, ended)
-  - `useAudio`: Manages sound effects and background music
+- **User Management System**: Complete user registration, authentication, and profile management
+  - User login/logout with persistent localStorage
+  - Guest account support
+  - User profile display and management
+- **Game Rendering System**: Unified game renderer supporting multiple game types
+  - `GameRenderer` component dynamically loads game templates
+  - Game-specific environments, lighting, and backgrounds
+  - Shared UI components across all game types
+- **Chat System**: Real-time communication between players
+  - Chat message history with timestamps
+  - Quick chat buttons for common messages
+  - System announcements and user messages
+- **Car Customization System**: Complete vehicle customization platform
+  - Appearance customization (body, roof, wheel colors)
+  - Body type selection (sedan, sports, truck, compact)
+  - Upgrade system with 5 levels for engine, brakes, handling
+  - Nitro boost system with 3 levels
+- **World Builder**: 3D world creation and editing tool
+  - Block-based building system with 7 block types
+  - Real-time 3D preview with orbit controls
+  - Save/load custom worlds with metadata
+  - Public/private world sharing system
 - **Game Registry**: A modular system where games are registered with their components and initialization functions (6 game templates available)
 - **Game Templates**: Complete implementations of different game genres with unique control schemes and physics
 - **3D Rendering**: Canvas-based rendering with support for physics, lighting, and post-processing effects
@@ -85,13 +101,20 @@ The backend follows a RESTful API design with WebSocket support for real-time fe
 - **3D Asset Loading**: Support for GLTF/GLB model formats
 - **Audio Assets**: MP3, OGG, WAV file support for game audio
 
-## Game Templates Available
-- **Open World Explorer**: Large open world with camera-relative movement and free exploration
-- **Platformer Adventure**: Side-scrolling with jump physics and platform collision detection
-- **Circuit Racing**: High-speed racing with drift physics and professional track
-- **Arena Shooter**: Top-down combat with bullet system and tank controls
-- **Puzzle Chamber**: Interactive object manipulation with switches and doors
-- **Sandbox Mode**: Creative building and experimentation mode
+## Game Templates Available (All Playable)
+- **Open World Explorer**: Large open world with camera-relative movement and free exploration (Original full implementation)
+- **Platformer Adventure**: Jump-based gameplay with platforms and physics simulation
+- **Circuit Racing**: Circular racing track with car physics and drift mechanics  
+- **Arena Shooter**: Combat arena with cover objects and player movement
+- **Puzzle Chamber**: Interactive room with puzzle elements and switches
+- **Sandbox Mode**: Creative mode with various 3D objects and building tools
+
+## User Features
+- **Account System**: User registration with username, guest accounts, persistent login
+- **Car Customization**: Visual customization and performance upgrades with 15+ upgrade levels
+- **Chat Communication**: Real-time messaging with other players and quick chat options
+- **World Creation**: Custom world builder with 7 block types and 3D editing tools
+- **Game Selection**: Interactive menu system to choose and switch between game templates
 
 ## Recent Changes (August 2025)
 - Added 5 new game templates with complete gameplay mechanics
@@ -100,3 +123,10 @@ The backend follows a RESTful API design with WebSocket support for real-time fe
 - Created comprehensive game template documentation
 - Updated game registry system to handle multiple game types
 - Enhanced main menu to showcase all available game templates
+- **NEW: Complete User System** - User registration, guest login, persistent accounts
+- **NEW: Chat Engine** - Real-time chat system with quick chat options
+- **NEW: Car Customization** - Full car appearance and upgrade system with 5 upgrade levels
+- **NEW: World Builder** - 3D world creation tool with block placement and custom worlds
+- **NEW: Playable Game Templates** - All 6 game templates are now fully playable demos
+- **NEW: Game Selection System** - Interactive menu to choose and play different game types
+- **NEW: Multi-Game Architecture** - Unified rendering system supporting multiple game types
