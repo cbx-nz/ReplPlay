@@ -55,40 +55,79 @@ function GameApp() {
           {gameState === 'menu' && <GameMenu />}
           
           {gameState === 'playing' && currentGame && (
-            <Canvas
-              shadows
-              camera={{
-                position: [0, 5, 10],
-                fov: 45,
-                near: 0.1,
-                far: 1000
-              }}
-              gl={{
-                antialias: true,
-                powerPreference: "default"
-              }}
-            >
-              <color attach="background" args={["#87CEEB"]} />
-              
-              {/* Basic lighting */}
-              <ambientLight intensity={0.3} />
-              <directionalLight
-                position={[10, 10, 5]}
-                intensity={1}
-                castShadow
-                shadow-mapSize-width={2048}
-                shadow-mapSize-height={2048}
-                shadow-camera-far={50}
-                shadow-camera-left={-10}
-                shadow-camera-right={10}
-                shadow-camera-top={10}
-                shadow-camera-bottom={-10}
-              />
+            <>
+              <Canvas
+                shadows
+                camera={{
+                  position: [0, 5, 10],
+                  fov: 45,
+                  near: 0.1,
+                  far: 1000
+                }}
+                gl={{
+                  antialias: true,
+                  powerPreference: "default"
+                }}
+              >
+                <color attach="background" args={["#87CEEB"]} />
+                
+                {/* Basic lighting */}
+                <ambientLight intensity={0.3} />
+                <directionalLight
+                  position={[10, 10, 5]}
+                  intensity={1}
+                  castShadow
+                  shadow-mapSize-width={2048}
+                  shadow-mapSize-height={2048}
+                  shadow-camera-far={50}
+                  shadow-camera-left={-10}
+                  shadow-camera-right={10}
+                  shadow-camera-top={10}
+                  shadow-camera-bottom={-10}
+                />
 
-              <Suspense fallback={null}>
-                <GameEngine />
-              </Suspense>
-            </Canvas>
+                <Suspense fallback={null}>
+                  <GameEngine />
+                </Suspense>
+              </Canvas>
+              
+              {/* Game HUD Overlay */}
+              {currentGame === 'driving' && (
+                <div className="absolute bottom-4 left-4 bg-black/50 text-white p-3 rounded">
+                  <div className="text-sm">
+                    <div>WASD: Steer & Accelerate</div>
+                    <div>Space: Brake</div>
+                    <div>ESC: Return to Menu</div>
+                  </div>
+                </div>
+              )}
+              
+              {currentGame === 'sandbox' && (
+                <>
+                  <div className="absolute top-4 right-4 bg-black/50 text-white p-3 rounded">
+                    <div className="text-lg font-bold mb-2">Sandbox Tools</div>
+                    <div className="space-y-2">
+                      <button className="block w-full bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm">
+                        Add Object
+                      </button>
+                      <button className="block w-full bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm">
+                        Remove Last
+                      </button>
+                    </div>
+                    <div className="text-xs mt-3 text-gray-300">
+                      <div>Click objects to interact</div>
+                      <div>WASD: Move</div>
+                      <div>Space: Jump</div>
+                      <div>ESC: Menu</div>
+                    </div>
+                  </div>
+                  
+                  <div className="absolute bottom-4 right-4 bg-black/50 text-white p-2 rounded text-sm">
+                    Objects: 3
+                  </div>
+                </>
+              )}
+            </>
           )}
         </KeyboardControls>
       )}

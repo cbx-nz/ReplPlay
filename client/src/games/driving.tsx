@@ -171,15 +171,6 @@ export default function DrivingGame({ gameData }: DrivingGameProps) {
       <RaceTrack />
       <Car isPlayer={true} />
       <MultiplayerManager />
-      
-      {/* HUD */}
-      <div className="absolute bottom-4 left-4 bg-black/50 text-white p-3 rounded">
-        <div className="text-sm">
-          <div>WASD: Steer & Accelerate</div>
-          <div>Space: Brake</div>
-          <div>ESC: Return to Menu</div>
-        </div>
-      </div>
     </>
   );
 }

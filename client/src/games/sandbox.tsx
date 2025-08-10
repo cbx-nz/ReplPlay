@@ -133,36 +133,6 @@ export default function SandboxGame({ gameData }: SandboxGameProps) {
       
       {/* Other players */}
       <MultiplayerManager />
-      
-      {/* Building tools UI */}
-      <div className="absolute top-4 right-4 bg-black/50 text-white p-3 rounded">
-        <div className="text-lg font-bold mb-2">Sandbox Tools</div>
-        <div className="space-y-2">
-          <button
-            onClick={addRandomObject}
-            className="block w-full bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm"
-          >
-            Add Object
-          </button>
-          <button
-            onClick={removeLastObject}
-            className="block w-full bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm"
-          >
-            Remove Last
-          </button>
-        </div>
-        <div className="text-xs mt-3 text-gray-300">
-          <div>Click objects to interact</div>
-          <div>WASD: Move</div>
-          <div>Space: Jump</div>
-          <div>ESC: Menu</div>
-        </div>
-      </div>
-      
-      {/* Object counter */}
-      <div className="absolute bottom-4 right-4 bg-black/50 text-white p-2 rounded text-sm">
-        Objects: {objects.length}
-      </div>
     </>
   );
 }
