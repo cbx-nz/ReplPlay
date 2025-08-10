@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { KeyboardControls, useKeyboardControls } from "@react-three/drei";
 import * as THREE from "three";
+import { useAudio } from "@/lib/stores/useAudio";
 
 // Shooter controls
 enum ShooterControls {
@@ -55,22 +56,42 @@ function Bullet({ position, direction, onHit }: any) {
 }
 
 // Enemy system
-function Enemy({ position, onDestroy }: any) {
+function Enemy({ position, onDestroy, onHit, id }: any) {
   const enemyRef = useRef<THREE.Group>(null);
   const [health, setHealth] = useState(3);
-  const speed = 2;
+  const speed = 2 + Math.random() * 2;
 
   useFrame((state, delta) => {
     if (!enemyRef.current) return;
     
-    // Simple AI - move toward center
+    // Simple AI - move toward center with some randomness
     const direction = new THREE.Vector3(0, 0, 0).sub(enemyRef.current.position);
     direction.y = 0;
     direction.normalize();
     
+    // Add some randomness to movement
+    direction.x += (Math.random() - 0.5) * 0.5;
+    direction.z += (Math.random() - 0.5) * 0.5;
+    direction.normalize();
+    
     enemyRef.current.position.add(direction.multiplyScalar(speed * delta));
     enemyRef.current.lookAt(0, enemyRef.current.position.y, 0);
+    
+    // Check collision with player (rough proximity)
+    const distanceToCenter = enemyRef.current.position.length();
+    if (distanceToCenter < 2) {
+      // Enemy reached player - deal damage and destroy enemy
+      onHit();
+      onDestroy();
+    }
   });
+
+  const takeDamage = () => {
+    setHealth(prev => prev - 1);
+    if (health <= 1) {
+      onDestroy();
+    }
+  };
 
   if (health <= 0) {
     onDestroy();
@@ -78,16 +99,21 @@ function Enemy({ position, onDestroy }: any) {
   }
 
   return (
-    <group ref={enemyRef} position={position}>
+    <group ref={enemyRef} position={position} userData={{ takeDamage, id }}>
       {/* Enemy body */}
       <mesh castShadow>
         <boxGeometry args={[1, 1, 1]} />
         <meshLambertMaterial color="#FF4444" />
       </mesh>
       {/* Health indicator */}
-      <mesh position={[0, 1, 0]}>
+      <mesh position={[0, 1, 0]} rotation={[0, 0, 0]}>
         <planeGeometry args={[1, 0.2]} />
         <meshBasicMaterial color={health > 1 ? "#00FF00" : "#FF0000"} />
+      </mesh>
+      {/* Enemy weapon indicator */}
+      <mesh position={[0, 0.5, -0.7]} castShadow>
+        <cylinderGeometry args={[0.05, 0.05, 0.5]} />
+        <meshLambertMaterial color="#333333" />
       </mesh>
     </group>
   );
@@ -97,10 +123,16 @@ function Enemy({ position, onDestroy }: any) {
 function ShooterPlayer({ gameData, setGameData }: any) {
   const playerRef = useRef<THREE.Group>(null);
   const [subscribe, getState] = useKeyboardControls<ShooterControls>();
+  const { playHit, playSuccess } = useAudio();
   const lastShotTime = useRef(0);
   const [bullets, setBullets] = useState<any[]>([]);
+  const [enemies, setEnemies] = useState<any[]>([]);
+  const [score, setScore] = useState(0);
+  const [health, setHealth] = useState(100);
+  const lastEnemySpawn = useRef(0);
   const speed = 8;
   const shotCooldown = 0.2;
+  const enemySpawnRate = 2; // seconds
 
   useFrame((state, delta) => {
     if (!playerRef.current) return;
@@ -134,7 +166,43 @@ function ShooterPlayer({ gameData, setGameData }: any) {
       
       setBullets(prev => [...prev, newBullet]);
       lastShotTime.current = state.clock.elapsedTime;
+      
+      // Play shooting sound
+      playHit();
     }
+
+    // Spawn enemies
+    if (state.clock.elapsedTime - lastEnemySpawn.current > enemySpawnRate) {
+      const spawnRadius = 25;
+      const angle = Math.random() * Math.PI * 2;
+      const newEnemy = {
+        id: Date.now(),
+        position: [
+          Math.cos(angle) * spawnRadius,
+          0.5,
+          Math.sin(angle) * spawnRadius
+        ]
+      };
+      
+      setEnemies(prev => [...prev, newEnemy]);
+      lastEnemySpawn.current = state.clock.elapsedTime;
+    }
+
+    // Bullet-enemy collision detection
+    bullets.forEach(bullet => {
+      enemies.forEach(enemy => {
+        const bulletPos = new THREE.Vector3(...bullet.position);
+        const enemyPos = new THREE.Vector3(...enemy.position);
+        if (bulletPos.distanceTo(enemyPos) < 1.5) {
+          removeBullet(bullet.id);
+          removeEnemy(enemy.id);
+          setScore(prev => prev + 10);
+          
+          // Play enemy destroyed sound
+          playSuccess();
+        }
+      });
+    });
 
     // Keep in bounds
     player.position.x = Math.max(-25, Math.min(25, player.position.x));
@@ -152,6 +220,14 @@ function ShooterPlayer({ gameData, setGameData }: any) {
 
   const removeBullet = (bulletId: number) => {
     setBullets(prev => prev.filter(b => b.id !== bulletId));
+  };
+
+  const removeEnemy = (enemyId: number) => {
+    setEnemies(prev => prev.filter(e => e.id !== enemyId));
+  };
+
+  const handleEnemyHit = () => {
+    setHealth(prev => Math.max(0, prev - 10));
   };
 
   return (
@@ -183,6 +259,22 @@ function ShooterPlayer({ gameData, setGameData }: any) {
           onHit={() => removeBullet(bullet.id)}
         />
       ))}
+      
+      {/* Render enemies */}
+      {enemies.map(enemy => (
+        <Enemy
+          key={enemy.id}
+          id={enemy.id}
+          position={enemy.position}
+          onDestroy={() => removeEnemy(enemy.id)}
+          onHit={handleEnemyHit}
+        />
+      ))}
+      
+      {/* UI Overlay */}
+      <group position={[0, 0, 0]}>
+        {/* This would be better handled in the main App component */}
+      </group>
     </group>
   );
 }
@@ -217,10 +309,10 @@ function ShooterArena() {
       
       {/* Cover objects */}
       {[
-        { pos: [10, 1, 10], size: [3, 2, 3] },
-        { pos: [-10, 1, -10], size: [3, 2, 3] },
-        { pos: [15, 1, -15], size: [2, 2, 4] },
-        { pos: [-15, 1, 15], size: [4, 2, 2] },
+        { pos: [10, 1, 10] as [number, number, number], size: [3, 2, 3] as [number, number, number] },
+        { pos: [-10, 1, -10] as [number, number, number], size: [3, 2, 3] as [number, number, number] },
+        { pos: [15, 1, -15] as [number, number, number], size: [2, 2, 4] as [number, number, number] },
+        { pos: [-15, 1, 15] as [number, number, number], size: [4, 2, 2] as [number, number, number] },
       ].map((cover, i) => (
         <mesh key={i} position={cover.pos} castShadow receiveShadow>
           <boxGeometry args={cover.size} />

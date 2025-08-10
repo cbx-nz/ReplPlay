@@ -170,6 +170,11 @@ function PuzzleRoom({ gameData, setGameData }: any) {
     { id: 2, position: [-3, 0.5, 3] },
     { id: 3, position: [0, 0.5, 6] },
   ]);
+  const [pressurePlates, setPressurePlates] = useState([
+    { id: 1, position: [5, 0, -5], activated: false },
+    { id: 2, position: [-5, 0, -5], activated: false },
+    { id: 3, position: [0, 0, -8], activated: false },
+  ]);
 
   const toggleSwitch = (index: number) => {
     setSwitches(prev => {
@@ -179,7 +184,22 @@ function PuzzleRoom({ gameData, setGameData }: any) {
     });
   };
 
-  const allSwitchesActivated = switches.every(s => s);
+  // Check if pressure plates should be activated based on player/box proximity
+  const checkPressurePlates = (playerPosition: THREE.Vector3) => {
+    setPressurePlates(prev => prev.map(plate => {
+      const platePos = new THREE.Vector3(...plate.position);
+      const distanceFromPlayer = playerPosition.distanceTo(platePos);
+      
+      // Check if player is close enough to activate plate
+      const isPlayerNear = distanceFromPlayer < 1.5;
+      
+      // For now, activate plates when player is near
+      // Later can be enhanced to check for boxes too
+      return { ...plate, activated: isPlayerNear };
+    }));
+  };
+
+  const allPuzzlesSolved = switches.every(s => s) && pressurePlates.every(p => p.activated);
 
   return (
     <>
@@ -223,9 +243,13 @@ function PuzzleRoom({ gameData, setGameData }: any) {
       ))}
       
       {/* Pressure plates */}
-      <PressurePlate position={[5, 0, -5]} isActivated={switches[0]} />
-      <PressurePlate position={[-5, 0, -5]} isActivated={switches[1]} />
-      <PressurePlate position={[0, 0, -8]} isActivated={switches[2]} />
+      {pressurePlates.map(plate => (
+        <PressurePlate 
+          key={plate.id}
+          position={plate.position} 
+          isActivated={plate.activated} 
+        />
+      ))}
       
       {/* Switches */}
       <Switch 
@@ -245,14 +269,24 @@ function PuzzleRoom({ gameData, setGameData }: any) {
       />
       
       {/* Exit door */}
-      <Door position={[0, 1.5, -12.5]} isOpen={allSwitchesActivated} />
+      <Door position={[0, 1.5, -12.5]} isOpen={allPuzzlesSolved} />
       
       {/* Goal indicator */}
-      {allSwitchesActivated && (
+      {allPuzzlesSolved && (
         <mesh position={[0, 2, -10]} castShadow>
           <sphereGeometry args={[0.5]} />
           <meshLambertMaterial color="#FFD700" emissive="#FFD700" emissiveIntensity={0.3} />
         </mesh>
+      )}
+      
+      {/* Victory message */}
+      {allPuzzlesSolved && (
+        <group position={[0, 3, 0]}>
+          <mesh>
+            <planeGeometry args={[8, 2]} />
+            <meshBasicMaterial color="#000000" opacity={0.7} transparent />
+          </mesh>
+        </group>
       )}
     </>
   );

@@ -120,12 +120,12 @@ export function OpenWorldTerrain() {
       
       {/* Scattered buildings around the world */}
       {[
-        { pos: [30, 2, 40], size: [6, 4, 8], color: "#8B4513" }, // Brown building
-        { pos: [-40, 3, 20], size: [8, 6, 10], color: "#4a90e2" }, // Blue building
-        { pos: [60, 1.5, -30], size: [5, 3, 6], color: "#666666" }, // Gray building
-        { pos: [-20, 2.5, -60], size: [7, 5, 9], color: "#90EE90" }, // Light green building
-        { pos: [80, 2, 10], size: [4, 4, 5], color: "#FFB6C1" }, // Pink building
-        { pos: [-70, 1.8, -10], size: [6, 3.6, 7], color: "#DDA0DD" }, // Plum building
+        { pos: [30, 2, 40] as [number, number, number], size: [6, 4, 8] as [number, number, number], color: "#8B4513" }, // Brown building
+        { pos: [-40, 3, 20] as [number, number, number], size: [8, 6, 10] as [number, number, number], color: "#4a90e2" }, // Blue building
+        { pos: [60, 1.5, -30] as [number, number, number], size: [5, 3, 6] as [number, number, number], color: "#666666" }, // Gray building
+        { pos: [-20, 2.5, -60] as [number, number, number], size: [7, 5, 9] as [number, number, number], color: "#90EE90" }, // Light green building
+        { pos: [80, 2, 10] as [number, number, number], size: [4, 4, 5] as [number, number, number], color: "#FFB6C1" }, // Pink building
+        { pos: [-70, 1.8, -10] as [number, number, number], size: [6, 3.6, 7] as [number, number, number], color: "#DDA0DD" }, // Plum building
       ].map((building, i) => (
         <mesh key={`building-${i}`} position={building.pos} castShadow>
           <boxGeometry args={building.size} />

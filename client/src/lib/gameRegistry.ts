@@ -5,6 +5,7 @@ import { shooterGameConfig } from "../games/shooter";
 import { puzzleGameConfig } from "../games/puzzle";
 import { racingGameConfig } from "../games/racing";
 import { customWorldGameConfig } from "../games/custom-world";
+import CustomGamesPage from "../games/custom-games";
 
 export interface GameInfo {
   id: string;
@@ -21,5 +22,10 @@ export const gameRegistry: { [key: string]: Omit<GameInfo, 'id'> } = {
   shooter: shooterGameConfig,
   puzzle: puzzleGameConfig,
   racing: racingGameConfig,
-  "custom-world": customWorldGameConfig
+  "custom-world": customWorldGameConfig,
+  "custom-games": {
+    name: "Custom Games Library",
+    description: "Browse and play community-created games",
+    component: CustomGamesPage
+  }
 };

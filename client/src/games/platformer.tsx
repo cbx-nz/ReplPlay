@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { KeyboardControls, useKeyboardControls } from "@react-three/drei";
 import * as THREE from "three";
+import { useAudio } from "@/lib/stores/useAudio";
 
 // Simple controls for platformer
 enum PlatformerControls {
@@ -17,9 +18,10 @@ const platformerControls = [
 ];
 
 // Player component with jump physics
-function Player() {
+function Player({ gameData, setGameData }: any) {
   const playerRef = useRef<THREE.Group>(null);
   const [subscribe, getState] = useKeyboardControls<PlatformerControls>();
+  const { playSuccess } = useAudio();
   const velocityRef = useRef({ x: 0, y: 0 });
   const isGroundedRef = useRef(true);
   
@@ -80,6 +82,35 @@ function Player() {
       }
     });
 
+    // Coin collection
+    if (gameData && setGameData) {
+      const coinPositions: [number, number, number][] = [
+        [5, 2, 0], [15, 4, 0], [-5, 6, 0], [2, 9, 0], 
+        [25, 7, 0], [-15, 6, 0], [-25, 5, 0], [18, 8, 0]
+      ];
+      
+      coinPositions.forEach((coinPos, index) => {
+        const distance = Math.sqrt(
+          Math.pow(player.position.x - coinPos[0], 2) + 
+          Math.pow(player.position.y - coinPos[1], 2)
+        );
+        
+        if (distance < 1.5 && !gameData.collectedCoins?.includes(index)) {
+          // Collect coin
+          const newCollectedCoins = [...(gameData.collectedCoins || []), index];
+          setGameData({
+            ...gameData,
+            score: (gameData.score || 0) + 10,
+            collectedCoins: newCollectedCoins
+          });
+          
+          // Play collection sound
+          playSuccess();
+          console.log(`Coin ${index} collected! Score: ${(gameData.score || 0) + 10}`);
+        }
+      });
+    }
+
     // Keep player in bounds
     player.position.x = Math.max(-30, Math.min(30, player.position.x));
 
@@ -114,13 +145,13 @@ function Player() {
 }
 
 // Platform world
-function PlatformWorld() {
+function PlatformWorld({ gameData }: any) {
   const platforms = [
-    { pos: [10, 3, 0], size: [6, 1, 2], color: "#8B4513" },
-    { pos: [-10, 5, 0], size: [6, 1, 2], color: "#8B4513" },
-    { pos: [0, 8, 0], size: [4, 1, 2], color: "#8B4513" },
-    { pos: [20, 6, 0], size: [8, 1, 2], color: "#8B4513" },
-    { pos: [-20, 4, 0], size: [5, 1, 2], color: "#8B4513" },
+    { pos: [10, 3, 0] as [number, number, number], size: [6, 1, 2] as [number, number, number], color: "#8B4513" },
+    { pos: [-10, 5, 0] as [number, number, number], size: [6, 1, 2] as [number, number, number], color: "#8B4513" },
+    { pos: [0, 8, 0] as [number, number, number], size: [4, 1, 2] as [number, number, number], color: "#8B4513" },
+    { pos: [20, 6, 0] as [number, number, number], size: [8, 1, 2] as [number, number, number], color: "#8B4513" },
+    { pos: [-20, 4, 0] as [number, number, number], size: [5, 1, 2] as [number, number, number], color: "#8B4513" },
   ];
 
   return (
@@ -141,10 +172,16 @@ function PlatformWorld() {
       
       {/* Collectibles */}
       {Array.from({ length: 8 }, (_, i) => {
-        const positions = [
+        const positions: [number, number, number][] = [
           [5, 2, 0], [15, 4, 0], [-5, 6, 0], [2, 9, 0], 
           [25, 7, 0], [-15, 6, 0], [-25, 5, 0], [18, 8, 0]
         ];
+        
+        // Only show coins that haven't been collected
+        if (gameData?.collectedCoins?.includes(i)) {
+          return null;
+        }
+        
         return (
           <mesh key={`coin-${i}`} position={positions[i]} castShadow>
             <cylinderGeometry args={[0.3, 0.3, 0.1]} />
@@ -162,11 +199,11 @@ function PlatformWorld() {
   );
 }
 
-function PlatformerGame() {
+function PlatformerGame({ gameData, setGameData }: any) {
   return (
     <KeyboardControls map={platformerControls}>
-      <PlatformWorld />
-      <Player />
+      <PlatformWorld gameData={gameData} />
+      <Player gameData={gameData} setGameData={setGameData} />
     </KeyboardControls>
   );
 }
@@ -178,6 +215,7 @@ export const platformerGameConfig = {
   init: () => ({
     score: 0,
     lives: 3,
-    level: 1
+    level: 1,
+    collectedCoins: []
   })
 };

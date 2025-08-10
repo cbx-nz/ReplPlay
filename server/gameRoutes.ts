@@ -140,5 +140,5 @@ export function registerGameRoutes(app: any): void {
     }
   });
 
-  app.use('/api/games', router);
+  app.use('/api/custom-games', router);
 }

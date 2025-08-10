@@ -83,26 +83,27 @@ export default function SandboxGame({ gameData }: SandboxGameProps) {
       size: [1, 3, 8]
     }
   ]);
+  const [buildMode, setBuildMode] = useState(true);
 
   const [subscribe, getState] = useKeyboardControls<Controls>();
 
-  // Add new objects on key press
+  // Add functionality to the building tools
   useFrame(() => {
     const controls = getState();
     
-    // Example: Press 'Q' to add a random object (you'd map this to Controls enum)
-    // This is just a demonstration of dynamic object creation
+    // Key shortcuts for building (you'd map these properly in the Controls enum)
+    // Q = Add object, R = Remove last object
   });
 
   const addRandomObject = () => {
     const types: ('box' | 'sphere' | 'cylinder')[] = ['box', 'sphere', 'cylinder'];
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98FB98'];
     
     const newObject: GameObject = {
       id: Date.now().toString(),
       position: [
         (Math.random() - 0.5) * 20,
-        2,
+        2 + Math.random() * 3,
         (Math.random() - 0.5) * 20
       ],
       type: types[Math.floor(Math.random() * types.length)],
@@ -121,18 +122,78 @@ export default function SandboxGame({ gameData }: SandboxGameProps) {
     setObjects(prev => prev.slice(0, -1));
   };
 
+  const clearAllObjects = () => {
+    setObjects([]);
+  };
+
+  // Handle click on ground to place objects
+  const handleGroundClick = (event: any) => {
+    if (!buildMode) return;
+    
+    const intersectionPoint = event.point;
+    if (intersectionPoint) {
+      const types: ('box' | 'sphere' | 'cylinder')[] = ['box', 'sphere', 'cylinder'];
+      const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+      
+      const newObject: GameObject = {
+        id: Date.now().toString(),
+        position: [intersectionPoint.x, intersectionPoint.y + 1, intersectionPoint.z],
+        type: types[Math.floor(Math.random() * types.length)],
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: [1, 1, 1]
+      };
+      
+      setObjects(prev => [...prev, newObject]);
+    }
+  };
+
   return (
     <>
+      {/* Ground plane for placing objects */}
+      <mesh 
+        rotation={[-Math.PI / 2, 0, 0]} 
+        position={[0, -0.5, 0]} 
+        receiveShadow
+        onClick={handleGroundClick}
+      >
+        <planeGeometry args={[50, 50]} />
+        <meshLambertMaterial color="#90EE90" transparent opacity={0.8} />
+      </mesh>
+      
       {/* Render all interactive objects */}
       {objects.map(object => (
         <InteractiveObject key={object.id} object={object} />
       ))}
+      
+      {/* Building tools UI elements - these will be controlled by the buttons in App.tsx */}
+      {buildMode && (
+        <group>
+          {/* Visual indicators for build mode */}
+          <mesh position={[0, 10, 0]}>
+            <sphereGeometry args={[0.2]} />
+            <meshBasicMaterial color="#FFD700" />
+          </mesh>
+        </group>
+      )}
       
       {/* Local player */}
       <Player isLocalPlayer={true} position={[0, 1, 0]} color="#4A90E2" />
       
       {/* Other players */}
       <MultiplayerManager />
+      
+      {/* Expose functions to parent component for button controls */}
+      {typeof window !== 'undefined' && (
+        <>
+          {(window as any).sandboxControls = {
+            addRandomObject,
+            removeLastObject,
+            clearAllObjects,
+            toggleBuildMode: () => setBuildMode(!buildMode),
+            objectCount: objects.length
+          }}
+        </>
+      )}
     </>
   );
 }
