@@ -1,6 +1,6 @@
-import { Canvas } from "@react-three/fiber";
-import { useState } from "react";
-import { KeyboardControls } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { useState, useRef, useEffect } from "react";
+import { KeyboardControls, useKeyboardControls } from "@react-three/drei";
 import * as THREE from "three";
 
 // Simple controls enum
@@ -41,10 +41,74 @@ function Ground() {
   );
 }
 
-// Simple car component
+// Interactive car component with movement
 function SimpleCar() {
+  const carRef = useRef<THREE.Group>(null);
+  const [subscribe, getState] = useKeyboardControls<Controls>();
+  
+  const speedRef = useRef(0);
+  const maxSpeed = 15;
+  const acceleration = 10;
+  const deceleration = 8;
+  const turnSpeed = 2;
+
+  useFrame((state, delta) => {
+    if (!carRef.current) return;
+
+    const controls = getState();
+    const car = carRef.current;
+    
+    // Acceleration/Deceleration
+    if (controls.forward) {
+      speedRef.current = Math.min(maxSpeed, speedRef.current + acceleration * delta);
+    } else if (controls.backward) {
+      speedRef.current = Math.max(-maxSpeed / 2, speedRef.current - acceleration * delta);
+    } else {
+      // Natural deceleration
+      if (speedRef.current > 0) {
+        speedRef.current = Math.max(0, speedRef.current - deceleration * delta);
+      } else if (speedRef.current < 0) {
+        speedRef.current = Math.min(0, speedRef.current + deceleration * delta);
+      }
+    }
+
+    // Braking
+    if (controls.jump) { // Space for brake
+      speedRef.current *= 0.9;
+    }
+
+    // Steering (only when moving)
+    if (Math.abs(speedRef.current) > 0.1) {
+      if (controls.leftward) {
+        car.rotation.y += turnSpeed * delta * (speedRef.current / maxSpeed);
+      }
+      if (controls.rightward) {
+        car.rotation.y -= turnSpeed * delta * (speedRef.current / maxSpeed);
+      }
+    }
+
+    // Apply movement
+    const forward = new THREE.Vector3(0, 0, -1);
+    forward.applyQuaternion(car.quaternion);
+    forward.multiplyScalar(speedRef.current * delta);
+    car.position.add(forward);
+
+    // Keep car in bounds
+    car.position.x = Math.max(-45, Math.min(45, car.position.x));
+    car.position.z = Math.max(-45, Math.min(45, car.position.z));
+
+    // Update camera to follow car
+    const cameraTarget = new THREE.Vector3(
+      car.position.x,
+      car.position.y + 5,
+      car.position.z + 10
+    );
+    state.camera.position.lerp(cameraTarget, 0.1);
+    state.camera.lookAt(car.position);
+  });
+
   return (
-    <group position={[0, 0.5, 0]}>
+    <group ref={carRef} position={[0, 0.5, 0]}>
       {/* Car body */}
       <mesh castShadow>
         <boxGeometry args={[2, 1, 4]} />
@@ -110,6 +174,18 @@ function SimpleMenu({ onStartGame }: { onStartGame: () => void }) {
 export default function SimpleApp() {
   const [gameState, setGameState] = useState<"menu" | "playing">("menu");
 
+  // Handle ESC key to return to menu
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && gameState === "playing") {
+        setGameState("menu");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [gameState]);
+
   return (
     <div style={{ 
       width: '100vw', 
@@ -171,8 +247,9 @@ export default function SimpleApp() {
             {/* Game HUD */}
             <div className="absolute bottom-4 left-4 bg-black/50 text-white p-3 rounded">
               <div className="text-sm">
-                <div>WASD: Move</div>
-                <div>Space: Jump</div>
+                <div>W/S: Accelerate/Reverse</div>
+                <div>A/D: Steer Left/Right</div>
+                <div>Space: Brake</div>
                 <div>ESC: Return to Menu</div>
               </div>
             </div>
