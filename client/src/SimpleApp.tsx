@@ -31,20 +31,127 @@ function FPSCounter() {
   );
 }
 
-// Simple ground plane
-function Ground() {
+// Racing track with ground
+function RaceTrack() {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
-      <planeGeometry args={[100, 100]} />
-      <meshLambertMaterial color="#4a5568" />
-    </mesh>
+    <>
+      {/* Main ground */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
+        <planeGeometry args={[100, 100]} />
+        <meshLambertMaterial color="#2d5016" />
+      </mesh>
+      
+      {/* Track surface - circular track */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.48, 0]} receiveShadow>
+        <ringGeometry args={[8, 25, 32]} />
+        <meshLambertMaterial color="#2a2a2a" />
+      </mesh>
+      
+      {/* Track markings - center line */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.47, 0]}>
+        <ringGeometry args={[16, 17, 32]} />
+        <meshLambertMaterial color="#ffffff" />
+      </mesh>
+      
+      {/* Inner barriers */}
+      {Array.from({ length: 24 }, (_, i) => {
+        const angle = (i / 24) * Math.PI * 2;
+        const radius = 6;
+        return (
+          <mesh 
+            key={`inner-${i}`}
+            position={[
+              Math.cos(angle) * radius, 
+              0.5, 
+              Math.sin(angle) * radius
+            ]}
+            castShadow
+          >
+            <boxGeometry args={[0.5, 1, 0.5]} />
+            <meshLambertMaterial color="#ff4444" />
+          </mesh>
+        );
+      })}
+      
+      {/* Outer barriers */}
+      {Array.from({ length: 32 }, (_, i) => {
+        const angle = (i / 32) * Math.PI * 2;
+        const radius = 27;
+        return (
+          <mesh 
+            key={`outer-${i}`}
+            position={[
+              Math.cos(angle) * radius, 
+              0.5, 
+              Math.sin(angle) * radius
+            ]}
+            castShadow
+          >
+            <boxGeometry args={[0.5, 1, 0.5]} />
+            <meshLambertMaterial color="#ff4444" />
+          </mesh>
+        );
+      })}
+      
+      {/* Starting line */}
+      <mesh position={[0, -0.46, 16.5]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[16, 1]} />
+        <meshLambertMaterial color="#ffffff" />
+      </mesh>
+      
+      {/* Grandstand */}
+      <mesh position={[35, 2, 0]} castShadow>
+        <boxGeometry args={[8, 4, 20]} />
+        <meshLambertMaterial color="#4a90e2" />
+      </mesh>
+      
+      {/* Pit building */}
+      <mesh position={[-35, 1.5, 0]} castShadow>
+        <boxGeometry args={[6, 3, 15]} />
+        <meshLambertMaterial color="#8B4513" />
+      </mesh>
+      
+      {/* Some trees around the track */}
+      {Array.from({ length: 8 }, (_, i) => {
+        const angle = (i / 8) * Math.PI * 2;
+        const radius = 40;
+        return (
+          <group key={`tree-${i}`} position={[
+            Math.cos(angle) * radius, 
+            0, 
+            Math.sin(angle) * radius
+          ]}>
+            {/* Tree trunk */}
+            <mesh position={[0, 1.5, 0]} castShadow>
+              <cylinderGeometry args={[0.3, 0.5, 3]} />
+              <meshLambertMaterial color="#8B4513" />
+            </mesh>
+            {/* Tree foliage */}
+            <mesh position={[0, 3.5, 0]} castShadow>
+              <sphereGeometry args={[2]} />
+              <meshLambertMaterial color="#228B22" />
+            </mesh>
+          </group>
+        );
+      })}
+    </>
   );
 }
 
+// Racing state component to share lap data
+function useRaceState() {
+  const [lapCount, setLapCount] = useState(0);
+  const [bestLapTime, setBestLapTime] = useState<number | null>(null);
+  return { lapCount, setLapCount, bestLapTime, setBestLapTime };
+}
+
 // Interactive car component with movement
-function SimpleCar() {
+function SimpleCar({ raceState }: { raceState: any }) {
   const carRef = useRef<THREE.Group>(null);
   const [subscribe, getState] = useKeyboardControls<Controls>();
+  const lapStartTime = useRef<number>(Date.now());
+  const lastAngle = useRef<number>(0);
+  const totalRotation = useRef<number>(0);
   
   const speedRef = useRef(0);
   const maxSpeed = 15;
@@ -93,9 +200,49 @@ function SimpleCar() {
     forward.multiplyScalar(speedRef.current * delta);
     car.position.add(forward);
 
-    // Keep car in bounds
-    car.position.x = Math.max(-45, Math.min(45, car.position.x));
-    car.position.z = Math.max(-45, Math.min(45, car.position.z));
+    // Keep car on track (circular track collision)
+    const distanceFromCenter = Math.sqrt(car.position.x * car.position.x + car.position.z * car.position.z);
+    const innerRadius = 8;
+    const outerRadius = 25;
+    
+    if (distanceFromCenter < innerRadius) {
+      // Hit inner barrier - push out
+      const angle = Math.atan2(car.position.z, car.position.x);
+      car.position.x = Math.cos(angle) * innerRadius;
+      car.position.z = Math.sin(angle) * innerRadius;
+      speedRef.current *= 0.3; // Reduce speed on collision
+    } else if (distanceFromCenter > outerRadius) {
+      // Hit outer barrier - push in
+      const angle = Math.atan2(car.position.z, car.position.x);
+      car.position.x = Math.cos(angle) * outerRadius;
+      car.position.z = Math.sin(angle) * outerRadius;
+      speedRef.current *= 0.3; // Reduce speed on collision
+    }
+
+    // Lap detection logic
+    const currentAngle = Math.atan2(car.position.z, car.position.x);
+    const angleDiff = currentAngle - lastAngle.current;
+    
+    // Handle angle wrap-around
+    let normalizedDiff = angleDiff;
+    if (normalizedDiff > Math.PI) normalizedDiff -= 2 * Math.PI;
+    if (normalizedDiff < -Math.PI) normalizedDiff += 2 * Math.PI;
+    
+    totalRotation.current += normalizedDiff;
+    lastAngle.current = currentAngle;
+    
+    // Check for completed lap (one full rotation)
+    if (Math.abs(totalRotation.current) >= 2 * Math.PI) {
+      const lapTime = Date.now() - lapStartTime.current;
+      raceState.setLapCount((prev: number) => prev + 1);
+      
+      if (!raceState.bestLapTime || lapTime < raceState.bestLapTime) {
+        raceState.setBestLapTime(lapTime);
+      }
+      
+      totalRotation.current = 0;
+      lapStartTime.current = Date.now();
+    }
 
     // Update camera to follow car
     const cameraTarget = new THREE.Vector3(
@@ -108,7 +255,7 @@ function SimpleCar() {
   });
 
   return (
-    <group ref={carRef} position={[0, 0.5, 0]}>
+    <group ref={carRef} position={[0, 0.5, 16]}>
       {/* Car body */}
       <mesh castShadow>
         <boxGeometry args={[2, 1, 4]} />
@@ -173,18 +320,22 @@ function SimpleMenu({ onStartGame }: { onStartGame: () => void }) {
 
 export default function SimpleApp() {
   const [gameState, setGameState] = useState<"menu" | "playing">("menu");
+  const raceState = useRaceState();
 
   // Handle ESC key to return to menu
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === "Escape" && gameState === "playing") {
         setGameState("menu");
+        // Reset race state when returning to menu
+        raceState.setLapCount(0);
+        raceState.setBestLapTime(null);
       }
     };
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [gameState]);
+  }, [gameState, raceState]);
 
   return (
     <div style={{ 
@@ -229,19 +380,8 @@ export default function SimpleApp() {
                 shadow-camera-bottom={-10}
               />
 
-              <Ground />
-              <SimpleCar />
-              
-              {/* Some basic objects */}
-              <mesh position={[10, 1, 10]} castShadow>
-                <boxGeometry args={[2, 2, 2]} />
-                <meshLambertMaterial color="#8B4513" />
-              </mesh>
-
-              <mesh position={[-10, 1, -10]} castShadow>
-                <boxGeometry args={[2, 2, 2]} />
-                <meshLambertMaterial color="#FF6B6B" />
-              </mesh>
+              <RaceTrack />
+              <SimpleCar raceState={raceState} />
             </Canvas>
             
             {/* Game HUD */}
@@ -254,8 +394,14 @@ export default function SimpleApp() {
               </div>
             </div>
             
-            <div className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded text-sm">
-              3D Game Framework - Press ESC for menu
+            {/* Race Info HUD */}
+            <div className="absolute top-4 right-4 bg-black/50 text-white p-3 rounded">
+              <div className="text-lg font-bold mb-2">Race Info</div>
+              <div className="text-sm space-y-1">
+                <div>Laps: {raceState.lapCount}</div>
+                <div>Best Time: {raceState.bestLapTime ? `${(raceState.bestLapTime / 1000).toFixed(2)}s` : 'N/A'}</div>
+                <div className="mt-2 text-xs text-gray-300">Complete laps by driving around the track!</div>
+              </div>
             </div>
           </>
         )}
