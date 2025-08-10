@@ -10,6 +10,10 @@ enum Controls {
   leftward = 'leftward',
   rightward = 'rightward',
   jump = 'jump',
+  cameraUp = 'cameraUp',
+  cameraDown = 'cameraDown',
+  cameraLeft = 'cameraLeft',
+  cameraRight = 'cameraRight',
 }
 
 const gameControls = [
@@ -18,6 +22,10 @@ const gameControls = [
   { name: Controls.leftward, keys: ['KeyA', 'ArrowLeft'] },
   { name: Controls.rightward, keys: ['KeyD', 'ArrowRight'] },
   { name: Controls.jump, keys: ['Space'] },
+  { name: Controls.cameraUp, keys: ['KeyI'] },
+  { name: Controls.cameraDown, keys: ['KeyK'] },
+  { name: Controls.cameraLeft, keys: ['KeyJ'] },
+  { name: Controls.cameraRight, keys: ['KeyL'] },
 ];
 
 // FPS Counter
@@ -31,109 +39,117 @@ function FPSCounter() {
   );
 }
 
-// Racing track with ground
-function RaceTrack() {
+// Large open world terrain
+function OpenWorldTerrain() {
+  const terrainSize = 200; // Much larger world
+  const chunkSize = 50;
+  
+  // Pre-calculate random values to avoid re-rendering
+  const [terrainData] = useState(() => {
+    const chunks = [];
+    const trees = [];
+    const rocks = [];
+    
+    // Create terrain chunks
+    for (let x = -terrainSize/2; x < terrainSize/2; x += chunkSize) {
+      for (let z = -terrainSize/2; z < terrainSize/2; z += chunkSize) {
+        chunks.push({ 
+          x, 
+          z, 
+          color: Math.random() > 0.7 ? "#3a4a1a" : 
+                 Math.random() > 0.5 ? "#5a6d2a" : "#2d5016"
+        });
+      }
+    }
+    
+    // Create trees
+    for (let i = 0; i < 20; i++) {
+      trees.push({
+        x: (Math.random() - 0.5) * 180,
+        z: (Math.random() - 0.5) * 180,
+        height: 2 + Math.random() * 2,
+        trunkRadius: 0.2 + Math.random() * 0.2,
+        trunkRadiusTop: 0.3 + Math.random() * 0.3,
+        foliageRadius: 1 + Math.random(),
+        foliageColor: Math.random() > 0.5 ? "#228B22" : "#32CD32"
+      });
+    }
+    
+    // Create rocks
+    for (let i = 0; i < 15; i++) {
+      rocks.push({
+        x: (Math.random() - 0.5) * 160,
+        z: (Math.random() - 0.5) * 160,
+        size: 0.5 + Math.random() * 1.5
+      });
+    }
+    
+    return { chunks, trees, rocks };
+  });
+  
   return (
     <>
-      {/* Main ground */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
-        <planeGeometry args={[100, 100]} />
-        <meshLambertMaterial color="#2d5016" />
-      </mesh>
+      {/* Terrain chunks */}
+      {terrainData.chunks.map((chunk, index) => (
+        <mesh 
+          key={index}
+          rotation={[-Math.PI / 2, 0, 0]} 
+          position={[chunk.x + chunkSize/2, -0.5, chunk.z + chunkSize/2]} 
+          receiveShadow
+        >
+          <planeGeometry args={[chunkSize, chunkSize]} />
+          <meshLambertMaterial color={chunk.color} />
+        </mesh>
+      ))}
       
-      {/* Track surface - circular track */}
+      {/* Main roads/paths */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.48, 0]} receiveShadow>
-        <ringGeometry args={[8, 25, 32]} />
-        <meshLambertMaterial color="#2a2a2a" />
+        <planeGeometry args={[8, terrainSize]} />
+        <meshLambertMaterial color="#333333" />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.48, 0]} receiveShadow>
+        <planeGeometry args={[terrainSize, 8]} />
+        <meshLambertMaterial color="#333333" />
       </mesh>
       
-      {/* Track markings - center line */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.47, 0]}>
-        <ringGeometry args={[16, 17, 32]} />
-        <meshLambertMaterial color="#ffffff" />
-      </mesh>
+      {/* Scattered buildings around the world */}
+      {[
+        { pos: [30, 2, 40], size: [6, 4, 8], color: "#8B4513" }, // Brown building
+        { pos: [-40, 3, 20], size: [8, 6, 10], color: "#4a90e2" }, // Blue building
+        { pos: [60, 1.5, -30], size: [5, 3, 6], color: "#666666" }, // Gray building
+        { pos: [-20, 2.5, -60], size: [7, 5, 9], color: "#90EE90" }, // Light green building
+        { pos: [80, 2, 10], size: [4, 4, 5], color: "#FFB6C1" }, // Pink building
+        { pos: [-70, 1.8, -10], size: [6, 3.6, 7], color: "#DDA0DD" }, // Plum building
+      ].map((building, i) => (
+        <mesh key={`building-${i}`} position={building.pos} castShadow>
+          <boxGeometry args={building.size} />
+          <meshLambertMaterial color={building.color} />
+        </mesh>
+      ))}
       
-      {/* Inner barriers */}
-      {Array.from({ length: 24 }, (_, i) => {
-        const angle = (i / 24) * Math.PI * 2;
-        const radius = 6;
-        return (
-          <mesh 
-            key={`inner-${i}`}
-            position={[
-              Math.cos(angle) * radius, 
-              0.5, 
-              Math.sin(angle) * radius
-            ]}
-            castShadow
-          >
-            <boxGeometry args={[0.5, 1, 0.5]} />
-            <meshLambertMaterial color="#ff4444" />
+      {/* Random trees scattered around */}
+      {terrainData.trees.map((tree, i) => (
+        <group key={`tree-${i}`} position={[tree.x, 0, tree.z]}>
+          {/* Tree trunk */}
+          <mesh position={[0, tree.height/2, 0]} castShadow>
+            <cylinderGeometry args={[tree.trunkRadius, tree.trunkRadiusTop, tree.height]} />
+            <meshLambertMaterial color="#8B4513" />
           </mesh>
-        );
-      })}
-      
-      {/* Outer barriers */}
-      {Array.from({ length: 32 }, (_, i) => {
-        const angle = (i / 32) * Math.PI * 2;
-        const radius = 27;
-        return (
-          <mesh 
-            key={`outer-${i}`}
-            position={[
-              Math.cos(angle) * radius, 
-              0.5, 
-              Math.sin(angle) * radius
-            ]}
-            castShadow
-          >
-            <boxGeometry args={[0.5, 1, 0.5]} />
-            <meshLambertMaterial color="#ff4444" />
+          {/* Tree foliage */}
+          <mesh position={[0, tree.height + 1, 0]} castShadow>
+            <sphereGeometry args={[tree.foliageRadius]} />
+            <meshLambertMaterial color={tree.foliageColor} />
           </mesh>
-        );
-      })}
-      
-      {/* Starting line */}
-      <mesh position={[0, -0.46, 16.5]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[16, 1]} />
-        <meshLambertMaterial color="#ffffff" />
-      </mesh>
-      
-      {/* Grandstand */}
-      <mesh position={[35, 2, 0]} castShadow>
-        <boxGeometry args={[8, 4, 20]} />
-        <meshLambertMaterial color="#4a90e2" />
-      </mesh>
-      
-      {/* Pit building */}
-      <mesh position={[-35, 1.5, 0]} castShadow>
-        <boxGeometry args={[6, 3, 15]} />
-        <meshLambertMaterial color="#8B4513" />
-      </mesh>
-      
-      {/* Some trees around the track */}
-      {Array.from({ length: 8 }, (_, i) => {
-        const angle = (i / 8) * Math.PI * 2;
-        const radius = 40;
-        return (
-          <group key={`tree-${i}`} position={[
-            Math.cos(angle) * radius, 
-            0, 
-            Math.sin(angle) * radius
-          ]}>
-            {/* Tree trunk */}
-            <mesh position={[0, 1.5, 0]} castShadow>
-              <cylinderGeometry args={[0.3, 0.5, 3]} />
-              <meshLambertMaterial color="#8B4513" />
-            </mesh>
-            {/* Tree foliage */}
-            <mesh position={[0, 3.5, 0]} castShadow>
-              <sphereGeometry args={[2]} />
-              <meshLambertMaterial color="#228B22" />
-            </mesh>
-          </group>
-        );
-      })}
+        </group>
+      ))}
+
+      {/* Some rocks/obstacles */}
+      {terrainData.rocks.map((rock, i) => (
+        <mesh key={`rock-${i}`} position={[rock.x, rock.size/2, rock.z]} castShadow>
+          <boxGeometry args={[rock.size, rock.size, rock.size]} />
+          <meshLambertMaterial color="#708090" />
+        </mesh>
+      ))}
     </>
   );
 }
@@ -164,98 +180,88 @@ function SimpleCar({ raceState }: { raceState: any }) {
 
     const controls = getState();
     const car = carRef.current;
+    const camera = state.camera;
     
-    // Acceleration/Deceleration
+    // Get camera forward direction (where camera is looking)
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    cameraDirection.y = 0; // Keep movement on ground plane
+    cameraDirection.normalize();
+    
+    // Get camera right direction
+    const cameraRight = new THREE.Vector3();
+    cameraRight.crossVectors(cameraDirection, new THREE.Vector3(0, 1, 0));
+    cameraRight.normalize();
+
+    // Movement based on camera direction
+    const moveVector = new THREE.Vector3();
+    
     if (controls.forward) {
+      moveVector.add(cameraDirection);
+    }
+    if (controls.backward) {
+      moveVector.sub(cameraDirection);
+    }
+    if (controls.leftward) {
+      moveVector.sub(cameraRight);
+    }
+    if (controls.rightward) {
+      moveVector.add(cameraRight);
+    }
+
+    // Camera rotation controls
+    if (controls.cameraLeft) {
+      camera.rotation.y += 2 * delta;
+    }
+    if (controls.cameraRight) {
+      camera.rotation.y -= 2 * delta;
+    }
+    if (controls.cameraUp) {
+      camera.rotation.x += 2 * delta;
+      camera.rotation.x = Math.min(Math.PI / 3, camera.rotation.x);
+    }
+    if (controls.cameraDown) {
+      camera.rotation.x -= 2 * delta;
+      camera.rotation.x = Math.max(-Math.PI / 3, camera.rotation.x);
+    }
+
+    // Normalize and apply speed
+    if (moveVector.length() > 0) {
+      moveVector.normalize();
       speedRef.current = Math.min(maxSpeed, speedRef.current + acceleration * delta);
-    } else if (controls.backward) {
-      speedRef.current = Math.max(-maxSpeed / 2, speedRef.current - acceleration * delta);
-    } else {
-      // Natural deceleration
-      if (speedRef.current > 0) {
-        speedRef.current = Math.max(0, speedRef.current - deceleration * delta);
-      } else if (speedRef.current < 0) {
-        speedRef.current = Math.min(0, speedRef.current + deceleration * delta);
+      
+      // Move the car
+      const movement = moveVector.multiplyScalar(speedRef.current * delta);
+      car.position.add(movement);
+      
+      // Rotate car to face movement direction
+      if (movement.length() > 0.1) {
+        const targetRotation = Math.atan2(movement.x, movement.z);
+        car.rotation.y = THREE.MathUtils.lerp(car.rotation.y, targetRotation, 5 * delta);
       }
+    } else {
+      // Natural deceleration when not moving
+      speedRef.current = Math.max(0, speedRef.current - deceleration * delta);
     }
 
     // Braking
-    if (controls.jump) { // Space for brake
-      speedRef.current *= 0.9;
+    if (controls.jump) {
+      speedRef.current *= 0.8;
     }
 
-    // Steering (only when moving)
-    if (Math.abs(speedRef.current) > 0.1) {
-      if (controls.leftward) {
-        car.rotation.y += turnSpeed * delta * (speedRef.current / maxSpeed);
-      }
-      if (controls.rightward) {
-        car.rotation.y -= turnSpeed * delta * (speedRef.current / maxSpeed);
-      }
-    }
+    // Keep car within world bounds
+    const worldSize = 95; // Slightly smaller than terrain
+    car.position.x = Math.max(-worldSize, Math.min(worldSize, car.position.x));
+    car.position.z = Math.max(-worldSize, Math.min(worldSize, car.position.z));
 
-    // Apply movement
-    const forward = new THREE.Vector3(0, 0, -1);
-    forward.applyQuaternion(car.quaternion);
-    forward.multiplyScalar(speedRef.current * delta);
-    car.position.add(forward);
-
-    // Keep car on track (circular track collision)
-    const distanceFromCenter = Math.sqrt(car.position.x * car.position.x + car.position.z * car.position.z);
-    const innerRadius = 8;
-    const outerRadius = 25;
-    
-    if (distanceFromCenter < innerRadius) {
-      // Hit inner barrier - push out
-      const angle = Math.atan2(car.position.z, car.position.x);
-      car.position.x = Math.cos(angle) * innerRadius;
-      car.position.z = Math.sin(angle) * innerRadius;
-      speedRef.current *= 0.3; // Reduce speed on collision
-    } else if (distanceFromCenter > outerRadius) {
-      // Hit outer barrier - push in
-      const angle = Math.atan2(car.position.z, car.position.x);
-      car.position.x = Math.cos(angle) * outerRadius;
-      car.position.z = Math.sin(angle) * outerRadius;
-      speedRef.current *= 0.3; // Reduce speed on collision
-    }
-
-    // Lap detection logic
-    const currentAngle = Math.atan2(car.position.z, car.position.x);
-    const angleDiff = currentAngle - lastAngle.current;
-    
-    // Handle angle wrap-around
-    let normalizedDiff = angleDiff;
-    if (normalizedDiff > Math.PI) normalizedDiff -= 2 * Math.PI;
-    if (normalizedDiff < -Math.PI) normalizedDiff += 2 * Math.PI;
-    
-    totalRotation.current += normalizedDiff;
-    lastAngle.current = currentAngle;
-    
-    // Check for completed lap (one full rotation)
-    if (Math.abs(totalRotation.current) >= 2 * Math.PI) {
-      const lapTime = Date.now() - lapStartTime.current;
-      raceState.setLapCount((prev: number) => prev + 1);
-      
-      if (!raceState.bestLapTime || lapTime < raceState.bestLapTime) {
-        raceState.setBestLapTime(lapTime);
-      }
-      
-      totalRotation.current = 0;
-      lapStartTime.current = Date.now();
-    }
-
-    // Update camera to follow car
-    const cameraTarget = new THREE.Vector3(
-      car.position.x,
-      car.position.y + 5,
-      car.position.z + 10
-    );
-    state.camera.position.lerp(cameraTarget, 0.1);
-    state.camera.lookAt(car.position);
+    // Free camera positioning - follow car loosely
+    const cameraOffset = new THREE.Vector3(0, 12, 15);
+    const cameraTarget = car.position.clone().add(cameraOffset);
+    state.camera.position.lerp(cameraTarget, 0.03);
   });
 
   return (
-    <group ref={carRef} position={[0, 0.5, 16]}>
+    <group ref={carRef} position={[0, 0.5, 0]}>
       {/* Car body */}
       <mesh castShadow>
         <boxGeometry args={[2, 1, 4]} />
@@ -380,27 +386,33 @@ export default function SimpleApp() {
                 shadow-camera-bottom={-10}
               />
 
-              <RaceTrack />
+              <OpenWorldTerrain />
               <SimpleCar raceState={raceState} />
             </Canvas>
             
             {/* Game HUD */}
             <div className="absolute bottom-4 left-4 bg-black/50 text-white p-3 rounded">
-              <div className="text-sm">
-                <div>W/S: Accelerate/Reverse</div>
-                <div>A/D: Steer Left/Right</div>
+              <div className="text-sm space-y-1">
+                <div className="font-bold text-yellow-300 mb-2">Movement Controls:</div>
+                <div>W/S: Move Forward/Backward</div>
+                <div>A/D: Move Left/Right</div>
                 <div>Space: Brake</div>
-                <div>ESC: Return to Menu</div>
+                <div className="font-bold text-blue-300 mt-2 mb-1">Camera Controls:</div>
+                <div>I/K: Look Up/Down</div>
+                <div>J/L: Look Left/Right</div>
+                <div className="mt-2 text-xs text-gray-300">ESC: Return to Menu</div>
               </div>
             </div>
             
-            {/* Race Info HUD */}
+            {/* World Info HUD */}
             <div className="absolute top-4 right-4 bg-black/50 text-white p-3 rounded">
-              <div className="text-lg font-bold mb-2">Race Info</div>
+              <div className="text-lg font-bold mb-2">Open World</div>
               <div className="text-sm space-y-1">
-                <div>Laps: {raceState.lapCount}</div>
-                <div>Best Time: {raceState.bestLapTime ? `${(raceState.bestLapTime / 1000).toFixed(2)}s` : 'N/A'}</div>
-                <div className="mt-2 text-xs text-gray-300">Complete laps by driving around the track!</div>
+                <div>World Size: 200x200 units</div>
+                <div>Buildings: 6</div>
+                <div>Trees: 20</div>
+                <div>Rocks: 15</div>
+                <div className="mt-2 text-xs text-gray-300">Explore the open world! Drive where the camera points.</div>
               </div>
             </div>
           </>
