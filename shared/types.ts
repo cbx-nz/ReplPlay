@@ -69,12 +69,67 @@ export interface GameRoom {
   id: string;
   name: string;
   worldId?: string;
-  gameType: 'openworld' | 'racing' | 'shooter' | 'platformer' | 'puzzle' | 'sandbox';
+  gameType: 'openworld' | 'racing' | 'shooter' | 'platformer' | 'puzzle' | 'sandbox' | 'custom';
   players: PlayerCar[];
   maxPlayers: number;
   isPrivate: boolean;
   hostId: string;
   createdAt: Date;
+}
+
+export interface CustomGame {
+  id: string;
+  name: string;
+  description: string;
+  creator: string;
+  isPublic: boolean;
+  thumbnail?: string;
+  gameCode: string; // TypeScript/JavaScript code for the game
+  gameAssets?: { [key: string]: string }; // Asset URLs or base64 data
+  gameConfig: GameConfig;
+  createdAt: Date;
+  updatedAt: Date;
+  tags?: string[];
+  likes: number;
+  downloads: number;
+  version: string;
+}
+
+export interface GameConfig {
+  name: string;
+  description: string;
+  maxPlayers: number;
+  gameMode: 'singleplayer' | 'multiplayer' | 'coop';
+  controls: { [key: string]: string }; // Key mappings
+  objectives?: string[];
+  settings?: { [key: string]: any };
+}
+
+export interface GameAsset {
+  id: string;
+  gameId: string;
+  name: string;
+  type: 'texture' | 'model' | 'sound' | 'script';
+  data: string; // Base64 or URL
+  mimeType: string;
+  size: number;
+}
+
+export interface GameMetadata {
+  id: string;
+  name: string;
+  description: string;
+  creator: string;
+  isPublic: boolean;
+  thumbnail?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  tags?: string[];
+  likes: number;
+  downloads: number;
+  version: string;
+  gameMode: 'singleplayer' | 'multiplayer' | 'coop';
+  maxPlayers: number;
 }
 
 export interface MultiplayerGameState {

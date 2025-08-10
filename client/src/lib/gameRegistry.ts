@@ -4,6 +4,7 @@ import { platformerGameConfig } from "../games/platformer";
 import { shooterGameConfig } from "../games/shooter";
 import { puzzleGameConfig } from "../games/puzzle";
 import { racingGameConfig } from "../games/racing";
+import { customWorldGameConfig } from "../games/custom-world";
 
 export interface GameInfo {
   id: string;
@@ -19,5 +20,6 @@ export const gameRegistry: { [key: string]: Omit<GameInfo, 'id'> } = {
   platformer: platformerGameConfig,
   shooter: shooterGameConfig,
   puzzle: puzzleGameConfig,
-  racing: racingGameConfig
+  racing: racingGameConfig,
+  "custom-world": customWorldGameConfig
 };

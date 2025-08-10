@@ -7,6 +7,8 @@ import "@fontsource/inter";
 import GameEngine from "./components/GameEngine";
 import GameMenu from "./components/GameMenu";
 import FPSCounter from "./components/FPSCounter";
+import MultiplayerStatus from "./components/MultiplayerStatus";
+import MultiplayerChat from "./components/MultiplayerChat";
 import { useGameEngine } from "./lib/stores/useGameEngine";
 import { useMultiplayer } from "./lib/stores/useMultiplayer";
 import { gameControls } from "./lib/controls";
@@ -41,14 +43,9 @@ function GameApp() {
   }, [gameState, setGameState]);
 
   return (
-    <div style={{ 
-      width: '100vw', 
-      height: '100vh', 
-      position: 'relative', 
-      overflow: 'hidden',
-      backgroundColor: '#111111'
-    }}>
+    <div className="w-screen h-screen relative overflow-hidden bg-gray-900">
       <FPSCounter />
+      <MultiplayerStatus />
       
       {showCanvas && (
         <KeyboardControls map={gameControls}>
@@ -90,6 +87,9 @@ function GameApp() {
                   <GameEngine />
                 </Suspense>
               </Canvas>
+              
+              {/* Multiplayer Chat */}
+              <MultiplayerChat />
               
               {/* Game HUD Overlay */}
               {currentGame === 'driving' && (

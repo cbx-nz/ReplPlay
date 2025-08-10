@@ -115,7 +115,7 @@ export function UserProfile({ user, onLogout }: UserProfileProps) {
       </div>
       <div className="text-xs text-gray-300">
         <div>ID: {user.id.slice(-8)}</div>
-        <div>Joined: {user.createdAt.toLocaleDateString()}</div>
+        <div>Joined: {new Date(user.createdAt).toLocaleDateString()}</div>
       </div>
     </div>
   );
